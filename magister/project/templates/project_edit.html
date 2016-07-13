@@ -1,0 +1,21 @@
+{% extends 'template.html' %}
+{% load staticfiles %}
+
+{% block project_add %}
+    <div class="col-lg-8 col-lg-offset-2">
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <form class="form-horizontal" action="" method="post">
+                    <legend>Редактирование проекта</legend>
+                    {% include 'generic/form.html' %}
+                    <div class="form-group">
+                        <div class="col-sm-6 col-sm-offset-2">
+                            <button class="btn btn-primary" type="submit">Изменить</button>
+                            <a class="btn btn-default" href="{% url 'main' %}">Отмена</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock%}

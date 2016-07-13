@@ -1,0 +1,64 @@
+{% extends 'template.html' %}
+{% load staticfiles%}
+
+{% block edit_entity %}
+    <div class="col-lg-8 col-lg-offset-2">
+        <div class="row">
+            <form class="form-horizontal" id="edit_form" action="{% url 'edit_entity' linked_entity.id %}" method="post">
+                {% csrf_token %}
+                <fieldset>
+                    <legend>Редактировать сущность</legend>
+                        <div class="form-group">
+                            <label for="id_item_name" class="col-lg-3 control-label">Сущность</label>
+                            <div class="col-lg-9">
+                                <input type="text" class="form-control" id="id_item_name" name="item_name" value="{{item_name}}">
+                            </div>
+                        </div>
+
+                    <div class="form-group">
+                        <label for="description" class="col-lg-3 control-label">Описание сущности</label>
+                        <div class="col-lg-9">
+                            <div id="description" contenteditable="true">
+                                {{linked_entity.description|safe}}
+                            </div>
+                            <span class="help-block">Опишите сущность несколькими предложениями</span>
+                        </div>
+                    </div>
+
+
+                <div class="form-group">
+                    <div class="col-lg-6 col-lg-offset-3">
+                        <a href="{% url 'get_entity' linked_entity.id %}" type="reset" class="btn btn-default">Отмена</a>
+                        <input type="button" class="btn btn-primary" value="ОК" id="sbmt">
+                    </div>
+                </div>
+                </fieldset>
+            </form>
+        </div>
+    </div>
+{% endblock%}
+{% block statics %}
+    <style>
+        #description {
+            -moz-appearance: textfield-multiline;
+            -webkit-appearance: textarea;
+            border: 1px solid gray;
+            font: medium -moz-fixed;
+            overflow: auto;
+            padding: 2px;
+            resize: both;
+            min-height: 150px;
+    }
+    </style>
+    <script>
+    $(function() {
+        $("#sbmt").click(function() {
+            var param = '';
+            param = $('#description').text();
+            var new_input = "<input type='hidden' name='description' value='" + param + "'/>";
+            $('#edit_form').append(new_input);
+            document.getElementById("edit_form").submit();
+        });
+    });
+    </script>
+{% endblock %}

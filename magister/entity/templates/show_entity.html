@@ -1,0 +1,178 @@
+{% extends 'template.html' %}
+{% load staticfiles%}
+
+{% block item %}
+    {% include "generic/messages.html" %}
+    <div class="col-lg-8 col-lg-offset-2">
+        <div class="row">
+            <h3><a href="/">На главную</a></h3>
+        </div>
+        <div class="row">
+            <h4>
+                <a href="{% url 'get_entity' linked_entity.id %}">{{linked_entity.item_name}}</a>
+                <a class="btn btn-link" data-toggle="tooltip" title="Редактировать сущность" href="{% url 'edit_entity' linked_entity.id %}"> <i class="glyphicon glyphicon-pencil"></i> </a>
+                <a class="btn btn-link" data-toggle="tooltip" title="Удалить сущность" href="{% url 'delete_entity' linked_entity.id %}"> <i class="glyphicon glyphicon-remove"></i> </a>
+            </h4>
+            <div class="text_content">
+                <div class="text_hover" style="margin: 20px;">
+                    <p>{{linked_entity.description}}</p>
+                </div>
+            </div>
+        </div>
+        <div><p id="test"></p></div>
+        <div><p id="error_msg"></p></div>
+        <div class="row">
+            <h4>Связи с другими сущностями:</h4>
+            {% for link in links %}
+                <a href="{% url 'get_entity' link.id %}">{{ link }}</a>
+            {% endfor %}
+        </div>
+        <div class="row">
+            <h4>Сноски:</h4>
+            {{ footnote_entity.description|safe }}
+        </div>
+    </div>
+{% endblock%}
+
+
+{% block statics %} <!-- block for context menu -->
+    <script src="{% static 'JqueryContextMenu/jquery.contextMenu.js' %}" type="text/javascript"></script>
+    <script src= "{% static 'JqueryContextMenu/jquery.ui.position.js' %}" type="text/javascript"></script>
+
+    <script src= "{% static 'context_menu.js' %}" type="text/javascript"></script>
+
+    <link rel="stylesheet" href="{% static 'JqueryContextMenu/jquery.contextMenu.css' %}" media="screen">
+
+    <style>
+        .data-title:before {
+            content: attr(data-menutitle);
+            display: block;
+            position: absolute;
+            top: 0;
+            right: 0;
+            left: 0;
+            background: #DDD;
+            padding: 2px;
+
+            font-family: Verdana, Arial, Helvetica, sans-serif;
+            font-size: 15px;
+            font-weight: bold;
+        }
+        .data-title :first-child {
+            margin-top: 20px;
+        }
+        .true_word {
+            background-color: #10EEC9;
+            border: 1px solid #10EEC9;
+            border-radius: 0.5em;
+        }
+        .text_content {
+            font-size: 18px;
+        }
+    </style>
+
+    <script>
+    $(function() {
+    // wrap words in spans
+    $('.text_hover').each(function() {
+        var $this = $(this);
+        //$this.html($this.text().replace(/([\u0400-\u04FF\u0040-\u0080]+)/g, "<span class='context_menu'>$1</span>"));
+        //$this.html($this.text().replace(/([\u0400-\u04FF]+)/g, "<span class='context_menu'>$1</span>"));
+        $this.html($this.text().replace(/([A-Za-zА-Яа-я]+(?![^<>]*>))/g, "<span class='context_menu'>$1</span>"));
+    });
+
+    var hovered_word;
+
+    // bind to each span
+    $('.context_menu').hover(
+        function() {
+            hovered_word = $(this).text(); // $(this) - hovered span
+
+            $('#word').text($(this).css({
+                "background-color": "#10EEC9",
+                "border": "1px solid #10EEC9",
+                "border-radius": "0.5em"
+            }).text());
+
+            $('.data-title').attr('data-menutitle', 'Слово: ' + hovered_word); // title in context_menu
+        },
+        function() {
+            $('#word').text(''); $(this).css({
+                "background-color": "",
+                "border": ""
+            });
+
+        }
+    );
+
+    // координаты курсора
+    var c_x, c_y;
+    $( document ).on( "mousemove", function( event ) {
+        c_x = event.pageX;
+        c_y = event.pageY;
+    });
+
+    $.contextMenu({
+        selector: '.context_menu',
+        trigger: 'right',
+        delay: 200,
+        className: 'data-title',
+        position: function(opt, x, y){
+            opt.$menu.css({top: c_y - 5, left: c_x - 15});
+        },
+        autoHide: true,
+        callback: function(key, options) {
+            if(key === 'add') {
+                //window.location.replace("{% url 'add_entity' entity.project_id %}" + '?name=' + hovered_word);
+                $.ajax({
+                    type: "POST",
+                    url: "/entity/mark/",
+                    data: {project_id: "{{entity.project_id}}", entity_name: hovered_word, current_entity_id: "{{ linked_entity.id }}"},
+
+                    success: function(data) {
+                        if (data.status == '1') {
+                            /*var jsonString = JSON.stringify(data.message);
+                            var t = jQuery.parseJSON(jsonString);
+                            $("#test").html(t);*/
+                            location.reload();
+                        }
+                        else if (data.status == '2') {
+                            window.location.replace("{% url 'add_entity' entity.project_id %}" + '?name=' + data.new_entity);
+                        }
+                        else {
+                            $("#error_msg").html(data.error);
+                        }
+                    },
+                    failure: function(){
+                        $('#error_msg').html('Неизвестная ошибка.');
+                    }
+                });
+            }
+            if(key === 'delete') {
+                $.ajax({
+                    type: "POST",
+                    url: "/entity/delete_mark/",
+                    data: {project_id: "{{entity.project_id}}", current_entity_id: "{{ linked_entity.id }}", to_entity: hovered_word},
+
+                    success: function(data) {
+                        if (data.status == '1') {
+                            location.reload();
+                        } else {
+                            $("#error_msg").html(data.error);
+                        }
+                    },
+                    failure: function(){
+                        $('#error_msg').html('Неизвестная ошибка.');
+                    }
+                });
+            }
+        },
+        items: {
+            "add": {name: "Отметить как сущность", icon: "add"},
+            "delete": {name: "Снять отметку", icon: "delete"}
+        }
+    });
+});
+    </script>
+
+{% endblock %}

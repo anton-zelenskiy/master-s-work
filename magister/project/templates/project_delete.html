@@ -1,0 +1,18 @@
+{% extends 'template.html' %}
+{% load staticfiles %}
+
+{% block project_add %}
+    <div class="col-lg-8 col-lg-offset-2">
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <form class="form-horizontal" action="" method="post">
+                    <legend>Удаление проекта</legend>
+                    {% csrf_token %}
+                    <p>Вы действительно хотите удалить проект "{{ object }}"?</p>
+                        <button class="btn btn-primary" type="submit">Удалить</button>
+                        <a class="btn btn-default" href="{% url 'main' %}">Отмена</a>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock%}
